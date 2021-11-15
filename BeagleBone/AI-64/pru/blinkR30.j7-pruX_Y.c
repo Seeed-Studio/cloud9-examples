@@ -8,50 +8,79 @@
 volatile register unsigned int __R30;
 volatile register unsigned int __R31;
 
-//#define PRU_SRAM __far attribute((cregister("PRU_SHAREDMEM", near)))
-#define PRU_SRAM __far __attribute__((cregister("PRU_SHAREDMEM", near)))
-//#define PRU_DMEM0 __far __attribute__((cregister("PRU_DMEM_0_1", near)))
-//#define PRU_DMEM1 __far __attribute__((cregister("PRU_DMEM_1_0", near)))
+#define MAXCH				1
+#define DELAY_1us			25
+#define CTRL_START			0x01
+#define CTRL_POLARY_L		0x02
 
-#if 1
-//volatile uint32_t shared_0;
-PRU_SRAM volatile uint32_t shared[8] = {0xaa, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-//PRU_DMEM0 volatile uint32_t shared_2;
-//PRU_DMEM1 volatile uint32_t shared_3;
-//#pragma DATA_SECTION(shared_4, ".bss")
-//volatile uint32_t shared_4;
+#define SHL(n)				((uint32_t)0x01<<(n))
 
-//#define PRU0_DRAM		0x00000 // offset to DRAM
-//volatile unsigned int *shared_5 = (unsigned int *)(PRU0_DRAM + 0x200);
+volatile uint32_t *pwm = (uint32_t *)(0x10000);
+#define pwm_ctl(j)			pwm[j+0]
+#define pwm_dut(j)			pwm[j+1]
+#define pwm_cyc(j)			pwm[j+2]
+#define pwm_cnt(j)			pwm[j+3]
+
 
 int main(void)
 {
+	uint8_t i = 0, j = 0;
+	uint32_t pins[MAXCH] = { SHL(5), SHL(13), SHL(16), SHL(17), SHL(2), SHL(8), SHL(4) };
+
+	/* Clear SYSCFG[STANDBY_INIT] to enable OCP master port */
 	CT_CFG.SYSCFG_bit.STANDBY_INIT = 0;
+	/* C28 defaults to 0x00000000, we need to set bits 23:8 to 0x0100 in order to have
+		it point to 0x00010000 */
 	PRU0_CTRL.CTPPR0_bit.C28_BLK_POINTER = 0x0100;
 
-//	shared_1 = 0xdeadbeef;
-	shared[0] = 0xdd;
-	shared[1] = 0x01;
-	shared[2] = 0x02;
-	shared[3] = 0x03;
-	shared[4] = 0x04;
-	shared[5] = 0x05;
-	shared[6] = 0x06;
-	shared[7] = 0x07;
+	__R30 = 0x0;
 
-	__halt();
-}
-#else
-// 500000000/5
-void main(void) {
-	//uint32_t gpio = P8_04;
+#pragma UNROLL(MAXCH)
+	for (i=0; i<MAXCH; i++) {
+		j = i*4;
+		pwm_ctl(j) = CTRL_START; // ctrl
+		pwm_dut(j) = 1; // duty
+		pwm_cyc(j) = 2; // cycle
+		pwm_cnt(j) = 0; // count
+	}
 
-	while(1) {
-		__R30 = 0xFFFFFF;//0x1<<2;		// Set GPIO pins
-		__delay_cycles(250);    // Wait 1/2 second
-		__R30 = 0;			// Clear GPIO pins
-		__delay_cycles(250);
+	for (;;) {
+		for (i=0; i<MAXCH; i++) {
+			j = i*4;
+			if (!(pwm_ctl(j) & CTRL_START)) {
+				if (pwm_ctl(j) & CTRL_POLARY_L) {
+					__R30 |= pins[i];
+				}
+				else {
+					__R30 &= ~pins[i];
+				}
+				continue;
+			}
+
+			if (pwm_cnt(j) >= pwm_cyc(j)) {
+				pwm_cnt(j) = 0;
+			}
+
+			if (pwm_cnt(j) < pwm_dut(j)) {
+				if (pwm_ctl(j) & CTRL_POLARY_L) {
+					__R30 &= ~pins[i];
+				}
+				else {
+					__R30 |= pins[i];
+				}
+			}
+			else {
+				if (pwm_ctl(j) & CTRL_POLARY_L) {
+					__R30 |= pins[i];
+				}
+				else {
+					__R30 &= ~pins[i];
+				}
+			}
+			pwm_cnt(j)++;
 		}
+	}
+
 	__halt();
 }
 
@@ -60,4 +89,3 @@ void main(void) {
 #pragma RETAIN(init_pins)
 const char init_pins[] =  
 	"\0\0";
-#endif
