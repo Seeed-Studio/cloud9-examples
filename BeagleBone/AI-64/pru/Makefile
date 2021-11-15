@@ -1,8 +1,8 @@
-all: ring.j7-pru0_0.out \
-  blinkR30.j7-pru0_0.out \
-  blinkR30.j7-pru0_1.out \
-  blinkR30.j7-pru1_0.out \
-  blinkR30.j7-pru1_1.out
+all: 
+	blinkR30.j7-pru0_0.out \
+	blinkR30.j7-pru0_1.out \
+	blinkR30.j7-pru1_0.out \
+	blinkR30.j7-pru1_1.out
 	@echo "Built!"
 
 blinkR30:
