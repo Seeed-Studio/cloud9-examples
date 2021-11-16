@@ -38,13 +38,13 @@ int main(void)
 
 	__R30 = 0x0;
 
-	pins[0] = SHL(5);
-	pins[1] = SHL(13);
-	pins[2] = SHL(16);
-	pins[3] = SHL(17);
-	pins[4] = SHL(2);
-	pins[5] = SHL(8);
-	pins[6] = SHL(4);
+	pins[0] = SHL(2);
+	pins[1] = SHL(4);
+	pins[2] = SHL(5);
+	pins[3] = SHL(8);
+	pins[4] = SHL(13);
+	pins[5] = SHL(16);
+	pins[6] = SHL(17);
 
 	for (i=0; i<MAXCH; i++) {
 		pwm[i].ctrl = CTRL_START;
@@ -91,5 +91,5 @@ int main(void)
 // Sets pinmux
 #pragma DATA_SECTION(init_pins, ".init_pins")
 #pragma RETAIN(init_pins)
-const char init_pins[] =  
+const char init_pins[] =
 	"\0\0";
