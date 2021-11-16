@@ -8,7 +8,7 @@
 typedef struct {
 	uint32_t ctrl;
 	uint32_t duty;
-	uint32_t cycle;
+	uint32_t period;
 	uint32_t count;
 }pwm_t;
 
@@ -65,14 +65,14 @@ int main(void)
 	for (i=0; i<MAXCH; i++) {
 		pwm[i].ctrl = 0;
 		pwm[i].duty = 10;
-		pwm[i].cycle = 100;
+		pwm[i].period = 100;
 		pwm[i].count = 0x0;
 	}
 
 	for (;;) {
 #pragma UNROLL(MAXCH)
 		for (i=0; i<MAXCH; i++) {
-			if (pwm[i].count >= pwm[i].cycle) {
+			if (pwm[i].count >= pwm[i].period) {
 				pwm[i].count = 0;
 			}
 
