@@ -22,13 +22,15 @@ volatile register unsigned int __R31;
 
 #define SHL(n)			((uint32_t)0x01<<(n))
 
-#define PRU_SRAM __far __attribute__((cregister("PRU_SHAREDMEM", near)))
-PRU_SRAM volatile pwm_t pwm[MAXCH] = { 0 };
+//#define PRU_SRAM __far __attribute__((cregister("PRU_SHAREDMEM", near)))
+//PRU_SRAM volatile pwm_t pwm[MAXCH] = { 0 };
 
 int main(void)
 {
 	uint8_t i = 0;
 	uint32_t pins[MAXCH] = { 0 };//{ SHL(5), SHL(13), SHL(16), SHL(17), SHL(2), SHL(8), SHL(4) };
+
+	volatile pwm_t *pwm = NULL;
 
 	/* Clear SYSCFG[STANDBY_INIT] to enable OCP master port */
 	CT_CFG.SYSCFG_bit.STANDBY_INIT = 0;
@@ -38,6 +40,8 @@ int main(void)
 
 	__R30 = 0x0;
 
+#if defined(PRUN_IS_0_0) || defined(PRUN_IS_1_0)
+	pwm = (pwm_t*)0x10000;
 	pins[0] = SHL(2);
 	pins[1] = SHL(4);
 	pins[2] = SHL(5);
@@ -45,11 +49,23 @@ int main(void)
 	pins[4] = SHL(13);
 	pins[5] = SHL(16);
 	pins[6] = SHL(17);
+#elif defined(PRUN_IS_0_1) || defined(PRUN_IS_1_1)
+	pwm = (pwm_t*)0x10100;
+	pins[0] = SHL(2);
+	pins[1] = SHL(4);
+	pins[2] = SHL(12);
+	pins[3] = SHL(13);
+	pins[4] = SHL(14);
+	pins[5] = SHL(15);
+	pins[6] = SHL(16);
+#else
+	__halt();
+#endif
 
 	for (i=0; i<MAXCH; i++) {
-		pwm[i].ctrl = CTRL_START;
-		pwm[i].duty = 1;
-		pwm[i].cycle = 2;
+		pwm[i].ctrl = 0;
+		pwm[i].duty = 10;
+		pwm[i].cycle = 100;
 		pwm[i].count = 0x0;
 	}
 
