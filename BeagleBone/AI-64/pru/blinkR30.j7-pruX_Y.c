@@ -72,30 +72,20 @@ int main(void)
 	for (;;) {
 #pragma UNROLL(MAXCH)
 		for (i=0; i<MAXCH; i++) {
-			if (!(pwm[i].ctrl & CTRL_START)) {
-				if (pwm[i].ctrl & CTRL_POLARY_L)
-					__R30 |= pins[i];
-				else
-					__R30 &= ~pins[i];
-			
-				continue;
-			}
-
 			if (pwm[i].count >= pwm[i].cycle) {
 				pwm[i].count = 0;
 			}
 
 			if (pwm[i].count < pwm[i].duty) {
-				if (pwm[i].ctrl & CTRL_POLARY_L)
-					__R30 &= ~pins[i];
-				else
+				if (pwm[i].ctrl & CTRL_START) {
 					__R30 |= pins[i];
+				}
+				else {
+					__R30 &= ~pins[i];
+				}
 			}
 			else {
-				if (pwm[i].ctrl & CTRL_POLARY_L)
-					__R30 |= pins[i];
-				else
-					__R30 &= ~pins[i];
+				__R30 &= ~pins[i];
 			}
 			pwm[i].count++;
 		}
