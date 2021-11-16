@@ -54,6 +54,7 @@ int main(void)
 	}
 
 	for (;;) {
+#pragma UNROLL(MAXCH)
 		for (i=0; i<MAXCH; i++) {
 			if (!(pwm[i].ctrl & CTRL_START)) {
 				if (pwm[i].ctrl & CTRL_POLARY_L)
