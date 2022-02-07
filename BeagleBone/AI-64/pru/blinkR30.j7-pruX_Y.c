@@ -66,9 +66,6 @@ int main(void)
 
 	for (i=0; i<MAXCH; i++) {
 		pwm[i].ctrl = 0;
-		if (i == 0) {
-			pwm[i].ctrl = 1;
-		}
 		pwm[i].duty = 10;
 		pwm[i].period = 100;
 		pwm[i].count = 0x0;
