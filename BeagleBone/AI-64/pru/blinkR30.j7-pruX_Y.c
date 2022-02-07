@@ -29,6 +29,7 @@ int main(void)
 {
 	uint8_t i = 0;
 	uint32_t pins[MAXCH] = { 0 };//{ SHL(5), SHL(13), SHL(16), SHL(17), SHL(2), SHL(8), SHL(4) };
+	uint32_t pout = 0x0;
 
 	volatile pwm_t *pwm = NULL;
 
@@ -39,6 +40,7 @@ int main(void)
 	PRU0_CTRL.CTPPR0_bit.C28_BLK_POINTER = 0x0100;
 
 	__R30 = 0x0;
+	pout = 0x0;
 
 #if defined(PRUN_IS_0_0) || defined(PRUN_IS_1_0)
 	pwm = (pwm_t*)0x10000;
@@ -70,25 +72,19 @@ int main(void)
 	}
 
 	for (;;) {
-#pragma UNROLL(MAXCH)
+		pout = 0x0;
 		for (i=0; i<MAXCH; i++) {
 			if (pwm[i].count >= pwm[i].period) {
 				pwm[i].count = 0;
 			}
-
 			if (pwm[i].count < pwm[i].duty) {
 				if (pwm[i].ctrl & CTRL_START) {
-					__R30 |= pins[i];
+					pout |= pins[i];
 				}
-				else {
-					__R30 &= ~pins[i];
-				}
-			}
-			else {
-				__R30 &= ~pins[i];
 			}
 			pwm[i].count++;
 		}
+		__R30 = pout;
 	}
 
 	__halt();
