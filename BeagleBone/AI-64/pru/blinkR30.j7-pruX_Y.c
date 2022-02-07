@@ -43,16 +43,16 @@ int main(void)
 	pout = 0x0;
 
 #if defined(PRUN_IS_0_0) || defined(PRUN_IS_1_0)
-	pwm = (pwm_t*)0x10000;
-	pins[0] = SHL(2);
-	pins[1] = SHL(4);
-	pins[2] = SHL(5);
-	pins[3] = SHL(8);
-	pins[4] = SHL(13);
+	pwm = (volatile pwm_t*)0x10000;
+	pins[0] = SHL(1);
+	pins[1] = SHL(2);
+	pins[2] = SHL(4);
+	pins[3] = SHL(5);
+	pins[4] = SHL(8);
 	pins[5] = SHL(16);
 	pins[6] = SHL(17);
 #elif defined(PRUN_IS_0_1) || defined(PRUN_IS_1_1)
-	pwm = (pwm_t*)0x10100;
+	pwm = (volatile pwm_t*)0x10100;
 	pins[0] = SHL(2);
 	pins[1] = SHL(4);
 	pins[2] = SHL(12);
@@ -66,6 +66,9 @@ int main(void)
 
 	for (i=0; i<MAXCH; i++) {
 		pwm[i].ctrl = 0;
+		if (i == 0) {
+			pwm[i].ctrl = 1;
+		}
 		pwm[i].duty = 10;
 		pwm[i].period = 100;
 		pwm[i].count = 0x0;
@@ -77,8 +80,9 @@ int main(void)
 			if (pwm[i].count >= pwm[i].period) {
 				pwm[i].count = 0;
 			}
-			if (pwm[i].count < pwm[i].duty) {
-				if (pwm[i].ctrl & CTRL_START) {
+
+			if (pwm[i].ctrl) {
+				if (pwm[i].count < pwm[i].duty) {
 					pout |= pins[i];
 				}
 			}
